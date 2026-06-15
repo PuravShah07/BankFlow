@@ -1,5 +1,6 @@
 const userModel = require('../model/user.model');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../services/service.nodemailer');
 
 /**
  * - To Register
@@ -30,6 +31,12 @@ async function registerUser(req, res) {
     res.cookie('token', token);
     res.status(201).json({ message: 'User registered successfully', user: newUser.email, token: token });
 
+    // Send welcome email
+    await sendEmail(
+        newUser.email,
+        'Welcome to Ledger',
+        `Hello ${newUser.name},\n\nThank you for registering at Ledger! We're excited to have you on board.\n\nBest regards,\nThe Ledger Team`
+    );
     
 }
 
@@ -58,7 +65,7 @@ async function loginUser(req, res) {
     );
 
     res.cookie('token', token);
-    res.status(200).json({ message: 'User logged in successfully', user: isExist, token: token });
+    res.status(200).json({ message: 'User logged in successfully', user: {id : isExist._id, email : isExist.email, name : isExist.name }, token: token });
     
 }
 

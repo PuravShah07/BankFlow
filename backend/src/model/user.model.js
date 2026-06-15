@@ -15,12 +15,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Name is required']
     },
+
     password: {
         type: String,
         required: [true, 'Password is required'],
         minLength: [10, 'Password must be at least 10 characters long'],
         select: false // bydefault password is not select 
-    },
+    }
+},{
+    timestamps: true,
 });
 
 // bcrypt hashing middleware
