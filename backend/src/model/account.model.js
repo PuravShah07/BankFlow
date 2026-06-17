@@ -4,9 +4,10 @@ const accountSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: [true, 'Account must be associated with a user']
+        required: [true, 'Account must be associated with a user'],
+        index : true
     },
-    accountStatus: {
+    status: {
         type: String,
         enum: {
             values: ['ACTIVE', 'FREEZE', 'CLOSED'],
@@ -20,7 +21,10 @@ const accountSchema = new mongoose.Schema({
     }
 },{
     timestamps: true,
-})   
+})  
+
+accountSchema.index({ user: 1 , status : 1}); // compound index  
+
 
 const accountModel = mongoose.model('Account', accountSchema);
 module.exports = accountModel;
