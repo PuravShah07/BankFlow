@@ -1,6 +1,6 @@
 const userModel = require('../model/user.model');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../services/service.nodemailer');
+const emailServices = require('../services/service.nodemailer');
 
 /**
  * - To Register
@@ -32,7 +32,7 @@ async function registerUser(req, res) {
     res.status(201).json({ message: 'User registered successfully', user: newUser.email, token: token });
 
     // Send welcome email
-    await sendEmail(
+    await emailServices.sendRegistrationEmail(
         newUser.email,
         'Welcome to Ledger',
         `Hello ${newUser.name},\n\nThank you for registering at Ledger! We're excited to have you on board.\n\nBest regards,\nThe Ledger Team`

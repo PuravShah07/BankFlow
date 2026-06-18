@@ -23,21 +23,63 @@ transporter.verify((error, success) => {
     }
 });
 
-
-async function sendEmail(to, subject, text) {
+// email for registration
+async function sendRegistrationEmail(to, subject, text) {
     const mailOptions = {
-        from: `"Ledger Team" <${process.env.EMAIL_USER}>`,
+        from: process.env.EMAIL_USER,
         to,
         subject,
         text
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully');
-    } catch (error) {
-        console.error('Error sending email:', error);
     }
+    try  {
+        await transporter.sendMail(mailOptions);
+        console.log('Registration email sent successfully to');
+
+    } catch (error) {
+        console.error('Error sending Registration email:', error);
+    }
+
 }
 
-module.exports = sendEmail;
+// transaction done email
+async function sendTransactionDoneEmail(to, subject, text) {
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        text
+    }
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Transaction Done email sent successfully to');
+    } catch (error) {
+        console.error('Error sending Transaction Done email:', error);
+    }
+
+};
+
+// transaction failed email
+async function sendTransactionFailedEmail(to, subject, text) {
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        text
+    }
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Transaction Failed email sent successfully to');
+    } catch (error) {
+        console.error('Error sending Transaction Failed email:', error);
+    }
+};
+
+
+
+
+module.exports = {
+    sendRegistrationEmail,
+    sendTransactionDoneEmail,
+    sendTransactionFailedEmail
+};
+
