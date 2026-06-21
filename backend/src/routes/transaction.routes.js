@@ -9,6 +9,7 @@ const router = Router();
 
 
 router.post('/', authMiddleware.authMiddleware, transactionController.createTransaction);
+router.post('/system/init-fund', authMiddleware.authSysUserMiddleware, transactionController.initFund);
 
 
 

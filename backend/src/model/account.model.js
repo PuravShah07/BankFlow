@@ -25,39 +25,31 @@ const accountSchema = new mongoose.Schema({
 })  
 
 accountSchema.index({ user: 1 , status : 1}); // compound index  
-
-
-accountSchema.methods.getBalance = async function() {
-    // MongoDB aggregation pipeline..
+accountSchema.methods.getBalance = async function () {
     const result = await ledgerModel.aggregate([
         {
-            $match: { account: this._id },
+            $match: {
+                account: this._id
+            }
         },
         {
             $group: {
-                // CREDIT, DEBIT
                 _id: null,
-                totalSent: { $sum: { $cond: [{ $eq: ['$fromAcc', this._id] }, '$amount', 0] } },
-                totalReceived: { $sum: { $cond: [{ $eq: ['$ToAcc', this._id] }, '$amount', 0] } },
-                
-            },
-        },
-        {
-            $project: {
-                _id: 0,
-                totalBalance: { $subtract: ['$totalReceived', '$totalSent'] },
-
-            },
-        },
+                balance: {
+                    $sum: {
+                        $cond: [
+                            { $eq: ['$Type', 'CREDIT'] },
+                            '$amount',
+                            { $multiply: ['$amount', -1] }
+                        ]
+                    }
+                }
+            }
+        }
     ]);
 
-    if (result.length > 0) {
-        return result[0].totalBalance;
-    } else { // it will return empty array , when no trans found
-        return 0; 
-    }
-}
-
+    return result.length ? result[0].balance : 0;
+};
 
 const accountModel = mongoose.model('Account', accountSchema);
 module.exports = accountModel;

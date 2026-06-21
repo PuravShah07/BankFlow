@@ -25,13 +25,13 @@ async function createTransaction(req, res) {
     
     if(currTransaction) {
 
-        if(currTransaction.status === 'PENDING') {
+        if(currTransaction.status === 'pending') {
             return res.status(400).json({ message: 'Transaction is already in progress' });
-        } else if(currTransaction.status === 'COMPLETED') {
+        } else if(currTransaction.status === 'completed') {
             return res.status(400).json({ message: 'Transaction has already been completed' });
-        } else if(currTransaction.status === 'FAILED') {
+        } else if(currTransaction.status === 'failed') {
             return res.status(400).json({ message: 'Transaction has already failed' });
-        } else if(currTransaction.status === 'REVERSED') {
+        } else if(currTransaction.status === 'reversed') {
             return res.status(400).json({ message: 'Transaction has already been reversed' });
         }
 
@@ -100,7 +100,93 @@ async function createTransaction(req, res) {
 } 
 
 
+async function initFund(req, res) {
+    const { toAccountId, amount, idempotencyKey } = req.body;
+
+    if(!toAccountId || !amount || !idempotencyKey) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+   
+
+    const fromAccount = await accountModel.findOne({
+        user: req.user._id,
+        status: 'ACTIVE'
+    });
+
+
+
+    const toAccount = await accountModel.findById(toAccountId);
+    if(!toAccount) {
+        return res.status(404).json({ message: 'Destination account not found' });
+    }
+    // idempotency validation
+    const currTransaction = await transactionModel.findOne({ idempotencyKey: idempotencyKey });
+
+    if(currTransaction) {
+        if(currTransaction.status === 'pending') {
+            return res.status(400).json({ message: 'Transaction is already in progress' });
+        }
+        else if(currTransaction.status === 'completed') {
+            return res.status(400).json({ message: 'Transaction has already been completed' });
+        }
+        else if(currTransaction.status === 'failed') {
+            return res.status(400).json({ message: 'Transaction has already failed' });
+        }
+        else if(currTransaction.status === 'reversed') {
+            return res.status(400).json({ message: 'Transaction has already been reversed' });
+        }
+    }
+
+    if(toAccount.status !== 'ACTIVE') {
+        return res.status(400).json({ message: 'Destination account is not active' });
+    }
+
+    // MongoDB session
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    const transaction = await transactionModel.create([{
+        fromAcc: fromAccount._id,
+        ToAcc: toAccountId,
+        amount: amount,
+        idempotencyKey: idempotencyKey,
+        status: 'pending',
+    }], { session });
+
+    const debitLedger = await ledgerModel.create([{
+        account: fromAccount._id,
+        transaction: transaction[0]._id,
+        Type: 'DEBIT',
+        amount: amount,
+    }], { session });
+
+
+    const creditLedger = await ledgerModel.create([{
+        account: toAccount._id,
+        transaction: transaction[0]._id,
+        Type: 'CREDIT',
+        amount: amount,
+    }], { session });
+
+
+    
+    transaction[0].status = 'completed';
+    await transaction[0].save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(201).json({ 
+        message: 'Fund initialized successfully', 
+        transaction: transaction[0]
+     });
+
+}
+
+
 module.exports = {
     createTransaction,
+    initFund,
 }
 
