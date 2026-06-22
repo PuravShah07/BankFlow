@@ -23,7 +23,7 @@ async function createTransaction(req, res) {
     // idempotency validation
     const currTransaction = await transactionModel.findOne({ idempotencyKey: idempotencyKey });
     
-    if(currTransaction) {
+    if(currTransaction){
 
         if(currTransaction.status === 'pending') {
             return res.status(400).json({ message: 'Transaction is already in progress' });
@@ -59,9 +59,9 @@ async function createTransaction(req, res) {
         ToAcc: toAccountId,
         amount: amount,
         idempotencyKey: idempotencyKey,
-        status: 'PENDING',
+        status: 'pending',
 
-    }], { session });
+    }], { session }) ;
 
     const debitLedger = await ledgerModel.create([{
         account: fromAccountId,
@@ -78,7 +78,7 @@ async function createTransaction(req, res) {
     }], { session });
 
 
-    transaction[0].status = 'COMPLETED';
+    transaction[0].status = 'completed';
     await transaction[0].save({ session });
 
     await session.commitTransaction();

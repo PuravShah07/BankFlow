@@ -1,4 +1,5 @@
 const accountModel = require('../model/account.model');
+const userModel = require('../model/user.model');
 const emailServices  = require('../services/service.nodemailer');
 
 async function createAccount(req, res) {
@@ -21,9 +22,14 @@ async function getMyAccounts(req, res) {
 
 async function getBalance(req, res) {
     const accountId = req.params.accountId;
-    const account = await accountModel.findById({
-        _id: accountId
+    const account = await accountModel.findOne({
+        _id: accountId,
+        user: req.user._id
     });
+
+    if(!account) {
+        return res.status(404).json({ message: 'You Don\'t Have Access To This Account' });
+    }
 
 
     res.status(200).json({
