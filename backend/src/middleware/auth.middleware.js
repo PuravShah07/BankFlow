@@ -1,6 +1,7 @@
 const express = require('express');
 const userModel = require('../model/user.model');
 const jwt = require('jsonwebtoken');
+const blacklistTokenModel = require('../model/blackListToken.model');
 
 async function authMiddleware(req, res, next) {
     const token = req.cookies.token || req.header.authorization?.split(' ')[1];
@@ -8,6 +9,12 @@ async function authMiddleware(req, res, next) {
     if(!token) {
         return res.status(401).json({ message: 'Unauthorized access denied' });
     }
+
+    const blacklistedToken = await blacklistTokenModel.findOne({ token: token });
+    if(blacklistedToken) {
+        return res.status(401).json({ message: 'Cookie has been invalidated' });
+    }
+
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -30,6 +37,13 @@ async function authSysUserMiddleware(req, res, next) {
     if(!token) {
         return res.status(401).json({ message: 'Unauthorized access denied' });
     }
+    const blacklistedToken = await blacklistTokenModel.findOne({
+        token: token
+    });
+    if(blacklistedToken) {
+        return res.status(401).json({ message: 'Cookie has been invalidated' });
+    }
+
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);

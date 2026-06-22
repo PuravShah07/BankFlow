@@ -1,6 +1,7 @@
 const userModel = require('../model/user.model');
 const jwt = require('jsonwebtoken');
 const emailServices = require('../services/service.nodemailer');
+const blacklistTokenModel = require('../model/blackListToken.model');
 
 /**
  * - To Register
@@ -24,7 +25,7 @@ async function registerUser(req, res) {
     const token = jwt.sign(
         { id: newUser._id},
         process.env.JWT_SECRET,
-        { expiresIn: '3d' }
+        { expiresIn: '7d' }
     );
     
 
@@ -69,8 +70,21 @@ async function loginUser(req, res) {
     
 }
 
+async function logoutUser(req, res) {
+    const token = req.cookies.token || req.header.authorization?.split(' ')[1];
+
+    if(!token) {
+        return res.status(200).json({ message: 'User Already Logged Out' });
+    }
+
+    const blacklistedToken = await blacklistTokenModel.create({ token: token });
+    res.clearCookie('token');
+    return res.status(200).json({ message: 'User logged out successfully' });
+}
+
 
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 }
