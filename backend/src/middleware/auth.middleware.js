@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const blacklistTokenModel = require('../model/blackListToken.model');
 
 async function authMiddleware(req, res, next) {
-    const token = req.cookies.token || req.header.authorization?.split(' ')[1];
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
     if(!token) {
         return res.status(401).json({ message: 'Unauthorized access denied' });
@@ -32,7 +32,7 @@ async function authMiddleware(req, res, next) {
 }
 
 async function authSysUserMiddleware(req, res, next) {
-    const token = req.cookies.token || req.header.authorization?.split(' ')[1];
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
     if(!token) {
         return res.status(401).json({ message: 'Unauthorized access denied' });

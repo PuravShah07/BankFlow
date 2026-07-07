@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 
 
+
 const transporter = nodemailer.createTransport({
     // OAuth2 configuration
     service: 'gmail',
@@ -31,7 +32,7 @@ async function sendRegistrationEmail(to, subject, text) {
         subject,
         text
     }
-    try  {
+    try {
         await transporter.sendMail(mailOptions);
         console.log('Registration email sent successfully to');
 
