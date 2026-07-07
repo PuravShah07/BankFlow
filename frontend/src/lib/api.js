@@ -89,3 +89,10 @@ export async function getAccountBalance(accountId) {
     method: "GET",
   });
 }
+
+// get statement (ledger records)
+export async function getAccountStatement(accountId) {
+  return request(`/account/statement/${accountId}`, {
+    method: "GET",
+  });
+}
