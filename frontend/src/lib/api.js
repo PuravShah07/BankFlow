@@ -65,3 +65,27 @@ export async function logoutUser() {
 
   localStorage.removeItem("bankflow_token");
 }
+
+/* Accounts */
+
+// fetch all accounts
+export async function getMyAccounts() {
+  return request("/account/getMyAccounts", {
+    method: "GET",
+  });
+}
+
+//create
+export async function createAccount({ name, currency }) {
+  return request("/account/create", {
+    method: "POST",
+    body: JSON.stringify({ name, currency }),
+  });
+}
+
+// get balance
+export async function getAccountBalance(accountId) {
+  return request(`/account/balance/${accountId}`, {
+    method: "GET",
+  });
+}

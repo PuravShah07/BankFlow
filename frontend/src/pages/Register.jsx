@@ -52,7 +52,7 @@ export default function Register() {
       });
 
       // short delay
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       toast.error(err.message || "Registration failed. Please try again.");
     } finally {

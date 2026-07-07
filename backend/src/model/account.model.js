@@ -8,6 +8,11 @@ const accountSchema = new mongoose.Schema({
         required: [true, 'Account must be associated with a user'],
         index : true
     },
+    name: {
+        type: String,
+        required: [true, 'Account name is required'],
+        default: 'Primary Account'
+    },
     status: {
         type: String,
         enum: {

@@ -33,7 +33,7 @@ export default function Login() {
       });
 
       toast.success(`Welcome back, ${data.user.name}!`);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err.message || "Login failed. Please check your credentials.");
     } finally {

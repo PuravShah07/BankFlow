@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import {
   Shield,
   ArrowRightLeft,
@@ -92,9 +93,12 @@ function Navbar() {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground mr-2">
                 {user?.name || user?.email}
               </span>
+              <Button size="sm" asChild className="mr-1">
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
               <Button variant="ghost" size="sm" onClick={logout}>
                 <LogOut className="mr-1 h-4 w-4" /> Logout
               </Button>
@@ -119,6 +123,8 @@ function Navbar() {
 
 /** Hero section with gradient mesh background */
 function Hero() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-6 pt-16">
       {/* Gradient mesh — pure CSS, no images */}
@@ -141,11 +147,19 @@ function Hero() {
           movement. No hidden fees, no data tampering — just honest banking.
         </p>
         <div className="mt-10 flex items-center justify-center gap-4">
-          <Button size="lg" asChild>
-            <Link to="/register">
-              Open Free Account <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button size="lg" asChild>
+              <Link to="/dashboard">
+                Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button size="lg" asChild>
+              <Link to="/register">
+                Open Free Account <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           <Button variant="outline" size="lg" asChild>
             <a href="#features">Learn More</a>
           </Button>
@@ -285,6 +299,15 @@ function Footer() {
 
 
 export default function Landing() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
   return (
     <div className="min-h-screen">
       <Navbar />
