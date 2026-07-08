@@ -96,3 +96,11 @@ export async function getAccountStatement(accountId) {
     method: "GET",
   });
 }
+
+// create transaction
+export async function createTransaction({ fromAccountId, toAccountId, amount, idempotencyKey }) {
+  return request("/transaction", {
+    method: "POST",
+    body: JSON.stringify({ fromAccountId, toAccountId, amount, idempotencyKey }),
+  });
+}
