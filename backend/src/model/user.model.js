@@ -27,6 +27,14 @@ const userSchema = new mongoose.Schema({
         default: false,
         select: false,
         immutable: true
+    },
+    resetOtp: {
+        type: String,
+        select: false
+    },
+    resetOtpExpires: {
+        type: Date,
+        select: false
     }
 },{
     timestamps: true,

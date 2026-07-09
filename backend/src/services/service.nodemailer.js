@@ -78,9 +78,25 @@ async function sendTransactionFailedEmail(to, subject, text) {
 
 
 
+async function sendOtpEmail(to, otp) {
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject: 'Password Reset OTP',
+        text: `Your password reset OTP code is: ${otp}. It will expire in 10 minutes.`
+    }
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('OTP email sent successfully');
+    } catch (error) {
+        console.error('Error sending OTP email:', error);
+    }
+}
+
 module.exports = {
     sendRegistrationEmail,
     sendTransactionDoneEmail,
-    sendTransactionFailedEmail
+    sendTransactionFailedEmail,
+    sendOtpEmail
 };
 

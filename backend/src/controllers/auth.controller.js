@@ -83,8 +83,50 @@ async function logoutUser(req, res) {
 }
 
 
+async function forgotPassword(req, res) {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user) {
+        return res.status(404).json({ message: 'User Not Registered' });
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetOtp = otp;
+    user.resetOtpExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await emailServices.sendOtpEmail(email, otp);
+    res.status(200).json({ message: 'OTP sent to your email successfully' });
+}
+
+async function resetPassword(req, res) {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (newPassword.length < 10) {
+        return res.status(400).json({ message: 'Password must be at least 10 characters long' });
+    }
+    const user = await userModel.findOne({ email }).select('+resetOtp +resetOtpExpires');
+    if (!user) {
+        return res.status(404).json({ message: 'User Not Registered' });
+    }
+    if (!user.resetOtp || user.resetOtp !== otp || !user.resetOtpExpires || user.resetOtpExpires < Date.now()) {
+        return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+    user.password = newPassword;
+    user.resetOtp = undefined;
+    user.resetOtpExpires = undefined;
+    await user.save();
+    res.status(200).json({ message: 'Password reset successfully' });
+}
+
 module.exports = {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    forgotPassword,
+    resetPassword
 }

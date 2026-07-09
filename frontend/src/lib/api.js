@@ -97,10 +97,23 @@ export async function getAccountStatement(accountId) {
   });
 }
 
-// create transaction
 export async function createTransaction({ fromAccountId, toAccountId, amount, idempotencyKey }) {
   return request("/transaction", {
     method: "POST",
     body: JSON.stringify({ fromAccountId, toAccountId, amount, idempotencyKey }),
+  });
+}
+
+export async function sendResetOtp(email) {
+  return request("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword({ email, otp, newPassword }) {
+  return request("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ email, otp, newPassword }),
   });
 }

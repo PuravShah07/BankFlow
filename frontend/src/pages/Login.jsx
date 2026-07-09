@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { BlurFade } from "@/components/ui/blur-fade";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { sendResetOtp, resetPassword } from "@/lib/api";
 import { toast } from "sonner";
 import { ArrowRight, Loader2 } from "lucide-react";
-
 import { Logo } from "@/components/ui/logo";
 
 export default function Login() {
@@ -21,6 +22,14 @@ export default function Login() {
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOtp, setResetOtp] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetStep, setResetStep] = useState(1);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [resettingPass, setResettingPass] = useState(false);
 
   function handleChange(e) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -42,6 +51,41 @@ export default function Login() {
       toast.error(err.message || "Login failed. Please check your credentials.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleSendOtp(e) {
+    e.preventDefault();
+    if (!resetEmail.trim()) return toast.error("Email is required");
+    setSendingOtp(true);
+    try {
+      await sendResetOtp(resetEmail);
+      toast.success("OTP sent to your email!");
+      setResetStep(2);
+    } catch (err) {
+      toast.error(err.message || "Failed to send OTP");
+    } finally {
+      setSendingOtp(false);
+    }
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault();
+    if (!resetOtp.trim()) return toast.error("OTP is required");
+    if (!resetNewPassword || resetNewPassword.length < 10) return toast.error("Password must be at least 10 characters");
+    setResettingPass(true);
+    try {
+      await resetPassword({ email: resetEmail, otp: resetOtp, newPassword: resetNewPassword });
+      toast.success("Password reset successfully! Please sign in.");
+      setShowReset(false);
+      setResetEmail("");
+      setResetOtp("");
+      setResetNewPassword("");
+      setResetStep(1);
+    } catch (err) {
+      toast.error(err.message || "Reset failed");
+    } finally {
+      setResettingPass(false);
     }
   }
 
@@ -86,7 +130,10 @@ export default function Login() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="login-password">Password</Label>
+                    <button type="button" onClick={() => setShowReset(true)} className="text-xs text-primary hover:underline font-medium">Forgot Password?</button>
+                  </div>
                   <Input
                     id="login-password"
                     name="password"
@@ -127,6 +174,79 @@ export default function Login() {
           </Card>
         </BlurFade>
       </div>
+
+      <Dialog open={showReset} onOpenChange={setShowReset}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              {resetStep === 1 
+                ? "Enter your email address to receive a 6-digit OTP code."
+                : "Enter the OTP code sent to your email and your new password."}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {resetStep === 1 ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input 
+                  type="email" 
+                  placeholder="you@example.com" 
+                  value={resetEmail} 
+                  onChange={(e) => setResetEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={sendingOtp}>
+                {sendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Send OTP"}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input 
+                  type="email" 
+                  value={resetEmail} 
+                  disabled 
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>OTP Code</Label>
+                <Input 
+                  type="text" 
+                  placeholder="Enter 6-digit OTP" 
+                  value={resetOtp} 
+                  onChange={(e) => setResetOtp(e.target.value)} 
+                  required 
+                  maxLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>New Password</Label>
+                <Input 
+                  type="password" 
+                  placeholder="Min. 10 characters" 
+                  value={resetNewPassword} 
+                  onChange={(e) => setResetNewPassword(e.target.value)} 
+                  required 
+                  minLength={10}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={resettingPass}>
+                {resettingPass ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Reset Password"}
+              </Button>
+              <div className="text-center">
+                <button type="button" onClick={() => setResetStep(1)} className="text-xs text-primary hover:underline">
+                  Back / Change Email
+                </button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
