@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { getMyAccounts, createAccount, getAccountStatement, createTransaction } from "@/lib/api";
+import { getMyAccounts, createAccount, getAccountStatement, createTransaction, changePassword as apiChangePassword } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,38 @@ export default function Dashboard() {
   const [showStatement, setShowStatement] = useState(false);
   const [stateAcc, setStateAcc] = useState({ id: "", name: "", currency: "INR" });
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
+
+  const [showChangePass, setShowChangePass] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [submittingChangePass, setSubmittingChangePass] = useState(false);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      return toast.error("All fields are required");
+    }
+    if (newPassword !== confirmNewPassword) {
+      return toast.error("New passwords do not match");
+    }
+    if (newPassword.length < 10) {
+      return toast.error("New password must be at least 10 characters");
+    }
+    setSubmittingChangePass(true);
+    try {
+      await apiChangePassword({ currentPassword, newPassword });
+      toast.success("Password updated successfully!");
+      setShowChangePass(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err) {
+      toast.error(err.message || "Failed to change password");
+    } finally {
+      setSubmittingChangePass(false);
+    }
+  };
 
   const [txs, setTxs] = useState([]);
   const [txsLoading, setTxsLoading] = useState(false);
@@ -621,6 +653,10 @@ export default function Dashboard() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">{user?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowChangePass(true)}>
+                  <Icons.KeyRound className="mr-2 h-4 w-4" /> Change Password
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout().then(() => navigate("/"))} className="text-destructive focus:text-destructive">
                   <Icons.LogOut className="mr-2 h-4 w-4" /> Logout
                 </DropdownMenuItem>
@@ -955,6 +991,52 @@ export default function Dashboard() {
               </>
             ) : <p className="text-sm text-center py-4">Complete at least one transaction to get advice.</p>}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showChangePass} onOpenChange={setShowChangePass}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>Enter your current password and choose a new secure password.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Password</Label>
+              <Input 
+                type="password" 
+                placeholder="Current password" 
+                value={currentPassword} 
+                onChange={(e) => setCurrentPassword(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <Input 
+                type="password" 
+                placeholder="Min. 10 characters" 
+                value={newPassword} 
+                onChange={(e) => setNewPassword(e.target.value)} 
+                required 
+                minLength={10}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm New Password</Label>
+              <Input 
+                type="password" 
+                placeholder="Re-enter new password" 
+                value={confirmNewPassword} 
+                onChange={(e) => setConfirmNewPassword(e.target.value)} 
+                required 
+                minLength={10}
+              />
+            </div>
+            <Button type="submit" disabled={submittingChangePass} className="w-full">
+              {submittingChangePass ? <Icons.Loader2 className="animate-spin h-4 w-4" /> : "Update Password"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 
