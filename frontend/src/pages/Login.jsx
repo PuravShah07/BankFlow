@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { BlurFade } from "@/components/ui/blur-fade";
 import { toast } from "sonner";
 import { ArrowRight, Loader2 } from "lucide-react";
+
+import { Logo } from "@/components/ui/logo";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -49,72 +53,79 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 block text-center text-2xl font-bold tracking-tight text-foreground">
-          Bank<span className="text-primary">Flow</span>
-        </Link>
+        <BlurFade delay={0.1}>
+          <Link to="/" className="mb-8 flex items-center justify-center gap-2 text-2xl font-bold tracking-tight text-foreground animate-in fade-in slide-in-from-top-4 duration-500">
+            <Logo className="h-8 w-8" />
+            <span>Bank<span className="text-primary">Flow</span></span>
+          </Link>
+        </BlurFade>
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>
-              Sign in to your BankFlow account
-            </CardDescription>
-          </CardHeader>
+        <BlurFade delay={0.2}>
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Welcome back</CardTitle>
+              <CardDescription>
+                Sign in to your BankFlow account
+              </CardDescription>
+            </CardHeader>
 
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <Input
-                  id="login-email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-              </div>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    name="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
-                <Input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-              </div>
-            </CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </CardContent>
 
-            <CardFooter className="flex-col gap-4">
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Sign In <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              <CardFooter className="flex-col gap-4">
+                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
 
-              <p className="text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <Link to="/register" className="font-medium text-primary hover:underline">
-                  Sign Up
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
+                <Separator />
+
+                <p className="text-sm text-muted-foreground">
+                  Don&apos;t have an account?{" "}
+                  <Link to="/register" className="font-medium text-primary hover:underline">
+                    Sign Up
+                  </Link>
+                </p>
+              </CardFooter>
+            </form>
+          </Card>
+        </BlurFade>
       </div>
     </div>
   );

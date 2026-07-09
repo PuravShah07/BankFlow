@@ -18,8 +18,12 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-
-
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BlurFade } from "@/components/ui/blur-fade";
+import { Logo } from "@/components/ui/logo";
 
 const FEATURES = [
   {
@@ -81,30 +85,44 @@ const STEPS = [
 function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
 
+  const userInitials = user?.name
+    ? user.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+    : "U";
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        {/* Logo */}
-        <Link to="/" className="text-xl font-bold tracking-tight text-foreground">
-          Bank<span className="text-primary">Flow</span>
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
+          <Logo className="h-8 w-8" />
+          <span>Bank<span className="text-primary">Flow</span></span>
         </Link>
 
-        {/* Auth actions */}
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <span className="text-sm text-muted-foreground mr-2">
-                {user?.name || user?.email}
-              </span>
               <Button size="sm" asChild className="mr-1">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                <LogOut className="mr-1 h-4 w-4" /> Logout
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 px-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{userInitials}</AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline">{user?.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">{user?.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
-            <>
+            <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>
@@ -113,21 +131,20 @@ function Navbar() {
                   Sign Up <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>
+      <Separator />
     </nav>
   );
 }
 
-/** Hero section with gradient mesh background */
 function Hero() {
   const { isAuthenticated } = useAuth();
 
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-6 pt-16">
-      {/* Gradient mesh — pure CSS, no images */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
@@ -135,63 +152,86 @@ function Hero() {
       </div>
 
       <div className="mx-auto max-w-3xl text-center">
-        <p className="mb-4 text-sm font-medium uppercase tracking-widest text-muted-foreground">
-          Banking Ledger System
-        </p>
-        <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl">
-          Your Money. Your Ledger.{" "}
-          <span className="text-primary">Fully Transparent.</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-          An immutable, double-entry ledger that records every financial
-          movement. No hidden fees, no data tampering — just honest banking.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-4">
-          {isAuthenticated ? (
-            <Button size="lg" asChild>
-              <Link to="/dashboard">
-                Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+        <BlurFade delay={0.1}>
+          <Badge variant="secondary" className="mb-4 text-xs uppercase tracking-widest">
+            Banking Ledger System
+          </Badge>
+        </BlurFade>
+        <BlurFade delay={0.2}>
+          <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl">
+            Your Money. Your Ledger.{" "}
+            <span className="text-primary">Fully Transparent.</span>
+          </h1>
+        </BlurFade>
+        <BlurFade delay={0.3}>
+          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
+            An immutable, double-entry ledger that records every financial
+            movement. No hidden fees, no data tampering — just honest banking.
+          </p>
+        </BlurFade>
+        <BlurFade delay={0.4}>
+          <div className="mt-10 flex items-center justify-center gap-4">
+            {isAuthenticated ? (
+              <Button size="lg" asChild>
+                <Link to="/dashboard">
+                  Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="lg" asChild>
+                <Link to="/register">
+                  Open Free Account <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" size="lg" asChild>
+              <a href="#features">Learn More</a>
             </Button>
-          ) : (
-            <Button size="lg" asChild>
-              <Link to="/register">
-                Open Free Account <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
-          <Button variant="outline" size="lg" asChild>
-            <a href="#features">Learn More</a>
-          </Button>
-        </div>
+          </div>
+        </BlurFade>
       </div>
     </section>
   );
 }
 
-/** Feature cards grid — 6 core capabilities */
 function Features() {
   return (
     <section id="features" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        {/* Section heading */}
         <div className="mb-16 text-center">
-          <p className="mb-2 text-sm font-medium uppercase tracking-widest text-primary">
-            Core Features
-          </p>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Built for reliability
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Every feature is designed around financial integrity — from
-            immutable records to atomic transactions.
-          </p>
+          <BlurFade delay={0.1}>
+            <Badge variant="outline" className="mb-2 text-xs uppercase tracking-widest text-primary">
+              Core Features
+            </Badge>
+          </BlurFade>
+          <BlurFade delay={0.2}>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Built for reliability
+            </h2>
+          </BlurFade>
+          <BlurFade delay={0.3}>
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+              Every feature is designed around financial integrity — from
+              immutable records to atomic transactions.
+            </p>
+          </BlurFade>
         </div>
 
-        {/* Cards grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <FeatureCard key={feature.title} {...feature} />
+          {FEATURES.map((feature, idx) => (
+            <BlurFade key={feature.title} delay={0.1 + idx * 0.1}>
+              <Card className="group transition-all duration-300 hover:shadow-lg hover:border-primary/20 h-full">
+                <CardHeader>
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {feature.description}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </BlurFade>
           ))}
         </div>
       </div>
@@ -199,56 +239,41 @@ function Features() {
   );
 }
 
-/** Individual feature card */
-function FeatureCard({ icon: Icon, title, description }) {
-  return (
-    <Card className="group transition-all duration-300 hover:shadow-lg hover:border-primary/20">
-      <CardHeader>
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-          <Icon className="h-5 w-5" />
-        </div>
-        <CardTitle className="text-lg">{title}</CardTitle>
-        <CardDescription className="text-sm leading-relaxed">
-          {description}
-        </CardDescription>
-      </CardHeader>
-    </Card>
-  );
-}
-
-/** How it works — 3 numbered steps */
 function HowItWorks() {
   return (
-    <section className="border-t border-border/50 bg-muted/30 px-6 py-24">
+    <section className="bg-muted/30 px-6 py-24">
+      <Separator className="mb-24" />
       <div className="mx-auto max-w-4xl">
-        {/* Section heading */}
         <div className="mb-16 text-center">
-          <p className="mb-2 text-sm font-medium uppercase tracking-widest text-primary">
-            How It Works
-          </p>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Three steps to get started
-          </h2>
+          <BlurFade delay={0.1}>
+            <Badge variant="outline" className="mb-2 text-xs uppercase tracking-widest text-primary">
+              How It Works
+            </Badge>
+          </BlurFade>
+          <BlurFade delay={0.2}>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Three steps to get started
+            </h2>
+          </BlurFade>
         </div>
 
-        {/* Steps */}
         <div className="relative grid gap-12 md:grid-cols-3 md:gap-8">
-          {/* Connecting line (desktop only) */}
-          <div className="absolute top-8 left-[16.67%] right-[16.67%] hidden h-px bg-border md:block" />
+          <Separator className="absolute top-8 left-[16.67%] right-[16.67%] hidden md:block" orientation="horizontal" />
 
-          {STEPS.map((step) => (
-            <div key={step.number} className="relative text-center">
-              {/* Step number circle */}
-              <div className="relative z-10 mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary">
-                {step.number}
+          {STEPS.map((step, idx) => (
+            <BlurFade key={step.number} delay={0.1 + idx * 0.15}>
+              <div className="relative text-center">
+                <div className="relative z-10 mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary">
+                  {step.number}
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {step.description}
+                </p>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">
-                {step.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {step.description}
-              </p>
-            </div>
+            </BlurFade>
           ))}
         </div>
       </div>
@@ -256,40 +281,37 @@ function HowItWorks() {
   );
 }
 
-/** Full-width CTA banner */
 function CtaBanner() {
   return (
     <section className="px-6 py-24">
-      <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl bg-primary px-8 py-16 text-center text-primary-foreground sm:px-16">
-        {/* Subtle gradient overlay */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+      <BlurFade delay={0.2}>
+        <Card className="relative mx-auto max-w-4xl overflow-hidden bg-primary px-8 py-16 text-center text-primary-foreground sm:px-16 border-0">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
 
-        <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">
-          Start managing your finances with confidence
-        </h2>
-        <p className="relative mx-auto mt-4 max-w-xl text-primary-foreground/80">
-          Join BankFlow and experience banking that is fully transparent,
-          immutable, and built on real accounting principles.
-        </p>
-        <Button
-          size="lg"
-          variant="secondary"
-          className="relative mt-8"
-          asChild
-        >
-          <Link to="/register">
-            Create Account <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
+          <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">
+            Start managing your finances with confidence
+          </h2>
+          <p className="relative mx-auto mt-4 max-w-xl text-primary-foreground/80">
+            Join BankFlow and experience banking that is fully transparent,
+            immutable, and built on real accounting principles.
+          </p>
+          <div className="relative mt-8 flex justify-center">
+            <Button size="lg" variant="secondary" asChild>
+              <Link to="/register">
+                Create Account <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </Card>
+      </BlurFade>
     </section>
   );
 }
 
-/** Minimal footer */
 function Footer() {
   return (
-    <footer className="border-t border-border/50 px-6 py-8">
+    <footer className="px-6 py-8">
+      <Separator className="mb-8" />
       <div className="mx-auto max-w-6xl text-center text-sm text-muted-foreground">
         © {new Date().getFullYear()} BankFlow. Built with transparency in mind.
       </div>
