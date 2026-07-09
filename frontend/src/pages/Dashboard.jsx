@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [submittingAcc, setSubmittingAcc] = useState(false);
   const [accForm, setAccForm] = useState({ name: "", currency: "INR" });
   const [submittingTx, setSubmittingTx] = useState(false);
+  const [txSuccess, setTxSuccess] = useState(false);
   const [txForm, setTxForm] = useState({ fromAccountId: "", toAccountId: "", amount: "" });
 
   // Statement modal
@@ -118,18 +119,27 @@ export default function Dashboard() {
       return toast.error("Please fill all details correctly");
     }
     setSubmittingTx(true);
+    setTxSuccess(false);
     try {
       const key = `tx-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
       await createTransaction({ fromAccountId, toAccountId: toAccountId.trim(), amount: parseFloat(amount), idempotencyKey: key });
-      toast.success("Funds transferred!");
       const src = accs.find(a => a._id === fromAccountId);
       setNotifs(prev => [{ id: Date.now(), title: "Transfer Authorized", desc: `Sent ${fmtBal(amount, src?.currency || "INR")} to ${toAccountId.substr(-6)}`, time: "Just now", read: false }, ...prev]);
-      setShowTransfer(false);
-      setTxForm({ fromAccountId: "", toAccountId: "", amount: "" });
+      setSubmittingTx(false);
+      setTxSuccess(true);
       loadData();
+      setTimeout(() => {
+        setTxSuccess(prev => {
+          if (prev) {
+            setShowTransfer(false);
+            setTxForm({ fromAccountId: "", toAccountId: "", amount: "" });
+            return false;
+          }
+          return prev;
+        });
+      }, 3000);
     } catch (err) {
       toast.error(err.message || "Transfer failed");
-    } finally {
       setSubmittingTx(false);
     }
   };
@@ -158,6 +168,12 @@ export default function Dashboard() {
         </td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 13px; color: ${record.type === 'CREDIT' ? '#10b981' : '#f43f5e'};">
           ${record.type}
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; color: #333;">
+          ${record.description || "N/A"}
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 13px; color: #555;">
+          ${record.receiverName || "N/A"}
         </td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; font-size: 13px; color: ${record.type === 'CREDIT' ? '#10b981' : '#f43f5e'};">
           ${record.type === 'CREDIT' ? '+' : '-'}${fmtBal(record.amount, stateAcc.currency)}
@@ -190,6 +206,8 @@ export default function Dashboard() {
               <tr>
                 <th>Date / Time</th>
                 <th>Type</th>
+                <th>Description</th>
+                <th>Receiver Name</th>
                 <th style="text-align: right;">Amount</th>
               </tr>
             </thead>
@@ -309,6 +327,227 @@ export default function Dashboard() {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Icons.Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (showTransfer) {
+    if (submittingTx) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-6">
+          <div className="relative flex items-center justify-center w-80 h-80">
+            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+            <div className="absolute inset-4 rounded-full border-2 border-dashed border-primary/20 animate-[spin_10s_linear_infinite_reverse]" />
+            <div className="z-10 flex flex-col items-center justify-center text-center p-6 max-w-[240px]">
+              <h3 className="text-lg font-bold text-primary animate-pulse">Transaction in Progress</h3>
+              <p className="text-[11px] text-muted-foreground mt-2 font-medium">Your Amount is Getting Transfered via Safe way...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (txSuccess) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-6">
+          <style>{`
+            @keyframes strokeCircle {
+              to { stroke-dashoffset: 0; }
+            }
+            @keyframes strokeCheck {
+              to { stroke-dashoffset: 0; }
+            }
+            @keyframes scaleIn {
+              0% { transform: scale(0); }
+              100% { transform: scale(1); }
+            }
+          `}</style>
+          <div className="flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="relative flex items-center justify-center w-28 h-28 mb-6">
+              <svg className="w-full h-full text-emerald-500 animate-[scaleIn_0.3s_ease-out_forwards]" viewBox="0 0 52 52">
+                <circle className="stroke-emerald-500 stroke-[3] fill-none animate-[strokeCircle_0.6s_ease-in-out_forwards]" cx="26" cy="26" r="25" strokeDasharray="157" strokeDashoffset="157" />
+                <path className="stroke-emerald-500 stroke-[5] fill-none animate-[strokeCheck_0.3s_0.6s_ease-in-out_forwards]" d="M14 27 l8 8 l16 -16" strokeDasharray="48" strokeDashoffset="48" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-extrabold tracking-tight">Transfer Successful</h3>
+            <p className="text-xs text-muted-foreground mt-2 max-w-[280px]">Your funds have been transferred successfully via our secure pathway.</p>
+            <Button onClick={() => { setTxSuccess(false); setShowTransfer(false); setTxForm({ fromAccountId: "", toAccountId: "", amount: "" }); }} className="mt-8 px-8 py-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-lg shadow-emerald-500/20">Done</Button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-background text-foreground antialiased pb-12">
+        <nav className="sticky top-0 z-40 border-b bg-card/85 backdrop-blur-md">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+            <div className="flex items-center gap-2 font-bold text-xl">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <Icons.Layers className="h-5 w-5" />
+              </div>
+              <span>Bank<span className="text-primary">Flow</span></span>
+            </div>
+            <button onClick={() => setShowTransfer(false)} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground border rounded-xl px-3 py-1.5">
+              <Icons.ArrowLeft className="h-4 w-4" /> Back to Dashboard
+            </button>
+          </div>
+        </nav>
+
+        <main className="mx-auto max-w-2xl px-6 mt-12">
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight">Transfer Funds</h1>
+              <p className="text-xs text-muted-foreground mt-1">Move money securely between accounts instantly.</p>
+            </div>
+
+            <Card className="border shadow-sm rounded-3xl p-6 bg-card">
+              {accs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Icons.Inbox className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-semibold">No active accounts found.</p>
+                  <Button onClick={() => { setShowTransfer(false); setShowCreate(true); }} className="mt-4 rounded-xl">Create Account</Button>
+                </div>
+              ) : (
+                <form onSubmit={handleTransfer} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Source Account</Label>
+                    <select
+                      value={txForm.fromAccountId}
+                      onChange={(e) => setTxForm({ ...txForm, fromAccountId: e.target.value })}
+                      className="w-full border border-input rounded-xl p-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    >
+                      <option value="" disabled>Select account</option>
+                      {accs.filter(a => a.status === "ACTIVE").map(a => (
+                        <option key={a._id} value={a._id}>{a.name} ({fmtBal(a.balance, a.currency)})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Destination Account ID</Label>
+                    <Input
+                      placeholder="Paste destination account ID here..."
+                      value={txForm.toAccountId}
+                      onChange={(e) => setTxForm({ ...txForm, toAccountId: e.target.value })}
+                      className="p-3 rounded-xl border border-input focus:ring-2 focus:ring-primary/20 transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={txForm.amount}
+                        onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
+                        className="p-3 pl-8 rounded-xl border border-input focus:ring-2 focus:ring-primary/20 transition-all text-lg font-bold"
+                      />
+                      <div className="absolute left-3 top-3.5 text-muted-foreground font-semibold text-sm">
+                        {txForm.fromAccountId ? accs.find(a => a._id === txForm.fromAccountId)?.currency === "INR" ? "₹" : "$" : ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setShowTransfer(false)} className="flex-1 rounded-xl py-6 border-input font-bold">Cancel</Button>
+                    <Button type="submit" className="flex-1 rounded-xl py-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">Send Transfer</Button>
+                  </div>
+                </form>
+              )}
+            </Card>
+
+            <div className="rounded-2xl border bg-muted/30 p-4 flex gap-3 items-start">
+              <Icons.ShieldAlert className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold">Secure Bank Transfer</h4>
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">Transactions are signed cryptographically and monitored for security. Do not share transaction details with anyone.</p>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (showStatement) {
+    return (
+      <div className="min-h-screen bg-background text-foreground antialiased pb-12">
+        <nav className="sticky top-0 z-40 border-b bg-card/85 backdrop-blur-md">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+            <div className="flex items-center gap-2 font-bold text-xl">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <Icons.Layers className="h-5 w-5" />
+              </div>
+              <span>Bank<span className="text-primary">Flow</span></span>
+            </div>
+            <button onClick={() => setShowStatement(false)} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground border rounded-xl px-3 py-1.5">
+              <Icons.ArrowLeft className="h-4 w-4" /> Back to Dashboard
+            </button>
+          </div>
+        </nav>
+
+        <main className="mx-auto max-w-6xl px-6 mt-12">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight">{stateAcc.name} - Statement</h1>
+                <p className="text-xs text-muted-foreground mt-1 font-mono">Account ID: {stateAcc.id}</p>
+              </div>
+              <div className="flex gap-2.5">
+                {records.length > 0 && <Button variant="outline" onClick={handleExportPDF} className="rounded-xl border-input">Export PDF</Button>}
+                <Button variant="outline" onClick={() => setShowStatement(false)} className="rounded-xl border-input">Back to Dashboard</Button>
+              </div>
+            </div>
+
+            {records.length > 0 && (
+              <div className="flex gap-2 items-center bg-muted/40 p-3 rounded-2xl text-xs flex-wrap">
+                <input type="date" value={dateFilter.start} onChange={(e) => setDateFilter({...dateFilter, start: e.target.value})} className="border rounded-lg p-1.5 bg-background focus:outline-none" />
+                <span className="text-muted-foreground">to</span>
+                <input type="date" value={dateFilter.end} onChange={(e) => setDateFilter({...dateFilter, end: e.target.value})} className="border rounded-lg p-1.5 bg-background focus:outline-none" />
+                {(dateFilter.start || dateFilter.end) && <Button size="sm" variant="ghost" onClick={() => setDateFilter({ start: "", end: "" })} className="text-xs h-8 text-destructive hover:bg-destructive/10">Reset Filters</Button>}
+              </div>
+            )}
+
+            <Card className="border shadow-sm rounded-3xl overflow-hidden bg-card">
+              {recordsLoading ? (
+                <div className="flex py-24 justify-center"><Icons.Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+              ) : filteredStatement.length === 0 ? (
+                <div className="text-center py-24">
+                  <Icons.Inbox className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-semibold">No records found matching filters.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-muted border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <th className="p-4">Date</th>
+                        <th className="p-4">Type</th>
+                        <th className="p-4">Description</th>
+                        <th className="p-4">Receiver Name</th>
+                        <th className="p-4 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredStatement.map(r => (
+                        <tr key={r._id} className="hover:bg-muted/30 transition-colors">
+                          <td className="p-4 text-muted-foreground font-mono">{r.date ? new Date(r.date).toLocaleString() : "N/A"}</td>
+                          <td className="p-4">
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border ${r.type === 'CREDIT' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>{r.type}</span>
+                          </td>
+                          <td className="p-4 font-medium text-foreground">{r.description || "N/A"}</td>
+                          <td className="p-4 font-mono text-muted-foreground">{r.receiverName || "N/A"}</td>
+                          <td className={`p-4 text-right font-bold text-sm ${r.type === 'CREDIT' ? 'text-emerald-600' : 'text-destructive'}`}>{r.type === 'CREDIT' ? '+' : '-'}{fmtBal(r.amount, stateAcc.currency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </div>
+        </main>
       </div>
     );
   }
@@ -639,41 +878,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* TRANSFER MODAL */}
-      {showTransfer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">Transfer Funds</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowTransfer(false)}><Icons.X className="h-5 w-5" /></Button>
-            </div>
-            {accs.length === 0 ? (
-              <p className="text-sm text-center py-4">No accounts setup yet.</p>
-            ) : (
-              <form onSubmit={handleTransfer} className="space-y-4">
-                <div className="space-y-1">
-                  <Label>Source Account</Label>
-                  <select value={txForm.fromAccountId} onChange={(e) => setTxForm({...txForm, fromAccountId: e.target.value})} className="w-full border rounded-xl p-2 text-sm bg-background">
-                    <option value="" disabled>Select account</option>
-                    {accs.filter(a => a.status === "ACTIVE").map(a => (
-                      <option key={a._id} value={a._id}>{a.name} ({fmtBal(a.balance, a.currency)})</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <Label>Destination Account ID</Label>
-                  <Input placeholder="Paste account ID..." value={txForm.toAccountId} onChange={(e) => setTxForm({...txForm, toAccountId: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Amount</Label>
-                  <Input type="number" placeholder="0.00" value={txForm.amount} onChange={(e) => setTxForm({...txForm, amount: e.target.value})} />
-                </div>
-                <Button type="submit" disabled={submittingTx} className="w-full mt-2">{submittingTx ? <Icons.Loader2 className="animate-spin h-4 w-4" /> : "Transfer"}</Button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* IMPORT MODAL */}
       {showImport && (
@@ -722,59 +927,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* STATEMENT MODAL */}
-      {showStatement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl rounded-2xl border bg-card p-6 shadow-xl max-h-[85vh] flex flex-col">
-            <div className="flex justify-between items-center border-b pb-3 mb-4">
-              <div>
-                <h3 className="font-bold text-lg">{stateAcc.name} - Statement</h3>
-                <p className="text-[10px] text-muted-foreground font-mono">ID: {stateAcc.id}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {records.length > 0 && <Button size="sm" variant="outline" onClick={handleExportPDF} className="rounded-xl">Export PDF</Button>}
-                <Button variant="ghost" size="icon" onClick={() => setShowStatement(false)}><Icons.X className="h-5 w-5" /></Button>
-              </div>
-            </div>
-            {records.length > 0 && (
-              <div className="flex gap-2 items-center mb-4 bg-muted/40 p-2.5 rounded-xl text-xs flex-wrap">
-                <input type="date" value={dateFilter.start} onChange={(e) => setDateFilter({...dateFilter, start: e.target.value})} className="border rounded-lg p-1" />
-                <span className="text-muted-foreground">to</span>
-                <input type="date" value={dateFilter.end} onChange={(e) => setDateFilter({...dateFilter, end: e.target.value})} className="border rounded-lg p-1" />
-                {(dateFilter.start || dateFilter.end) && <Button size="sm" variant="ghost" onClick={() => setDateFilter({ start: "", end: "" })} className="text-xs h-7 text-destructive">Reset</Button>}
-              </div>
-            )}
-            <div className="flex-1 overflow-y-auto min-h-[300px]">
-              {recordsLoading ? (
-                <div className="flex py-12 justify-center"><Icons.Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-              ) : filteredStatement.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-12">No records found matching filters.</p>
-              ) : (
-                <div className="border rounded-xl overflow-hidden bg-background">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-muted border-b text-[10px] font-bold text-muted-foreground uppercase">
-                        <th className="p-3">Date</th><th className="p-3">Type</th><th className="p-3 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {filteredStatement.map(r => (
-                        <tr key={r._id} className="hover:bg-muted/30">
-                          <td className="p-3 text-muted-foreground font-mono">{r.date ? new Date(r.date).toLocaleString() : "N/A"}</td>
-                          <td className="p-3">
-                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border ${r.type === 'CREDIT' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>{r.type}</span>
-                          </td>
-                          <td className={`p-3 text-right font-bold ${r.type === 'CREDIT' ? 'text-emerald-600' : 'text-destructive'}`}>{r.type === 'CREDIT' ? '+' : '-'}{fmtBal(r.amount, stateAcc.currency)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
 
     </div>
   );

@@ -67,15 +67,41 @@ async function getStatement(req, res) {
     }
 
     const statement = await ledgerModel.find({ account: accountId })
-        .populate('transaction');
+        .populate({
+            path: 'transaction',
+            populate: [
+                {
+                    path: 'fromAcc',
+                    populate: { path: 'user', select: 'name email' }
+                },
+                {
+                    path: 'ToAcc',
+                    populate: { path: 'user', select: 'name email' }
+                }
+            ]
+        });
 
-    const formattedStatement = statement.map(entry => ({
-        _id: entry._id,
-        amount: entry.amount,
-        type: entry.Type,
-        transaction: entry.transaction,
-        date: entry.transaction ? entry.transaction.createdAt : null
-    }));
+    const formattedStatement = statement.map(entry => {
+        let receiverName = '';
+        let description = '';
+        if (entry.transaction) {
+            const isDebit = entry.Type === 'DEBIT';
+            const targetAcc = isDebit ? entry.transaction.ToAcc : entry.transaction.fromAcc;
+            receiverName = targetAcc?.user?.name || 'N/A';
+            description = isDebit
+                ? `Transfer to ${targetAcc?.user?.name || 'Unknown'} (${targetAcc?.name || 'N/A'})`
+                : `Transfer from ${targetAcc?.user?.name || 'Unknown'} (${targetAcc?.name || 'N/A'})`;
+        }
+        return {
+            _id: entry._id,
+            amount: entry.amount,
+            type: entry.Type,
+            transaction: entry.transaction,
+            date: entry.transaction ? entry.transaction.createdAt : null,
+            receiverName,
+            description
+        };
+    });
 
     formattedStatement.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
